@@ -202,5 +202,10 @@ button {
 	background-color: transparent;
 }
 
+#custom-rss {
+  margin: 0 15px;
+  color: @yellow
+}
+
 /* vim: ft=sass
 */

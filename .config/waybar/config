@@ -1,27 +1,30 @@
 {
     "layer": "top",
-    "height": 20,
+    "height": 24,
     "spacing": 5,
     // Choose the order of the modules
     "modules-left": [
-        "hyprland/workspaces"
+        "hyprland/workspaces",
+        "mpd",
     ],
-    "modules-center": [
-        "hyprland/window"
-    ],
+//   "modules-center": [
+//       "hyprland/window",
+//   ],
     "modules-right": [
+      "custom/rss",
       "custom/net",
       "network",
       "pulseaudio",
-      "bluetooth",
+      "backlight",
+//     "bluetooth",
       "cpu",
       "memory",
       "battery",
 	    "clock",
 		],
-		"hyprland/window": {
-			"separate-outputs": true
-		},
+//		"hyprland/window": {
+//			"separate-outputs": true
+//		},
     "hyprland/workspaces": {
         "disable-scroll": true,
         "all-outputs": true,
@@ -31,31 +34,28 @@
         // "icon-size": 21,
         "spacing": 10
     },
-	//	"custom/pacman": {
-	//		"interval": 3600,
-	//		"return-type": "json",
-	//		"exec": "~/.local/bin/pacman-updates",
-	//		"exec-if": "exit 0",
-	//		"on-click": "kitty -e 'yay'; pkill -SIGRTMIN+8 waybar",
-	//		"signal": 8
-	//	},
     "memory": {
         "interval": 10,
         "format": "{used:0.1f}G  ",
         "on-click-right": "foot --title htop sh -c 'htop'"
     },
     "cpu": {
-        "format": " {usage}%",
+        "format": "{usage}% ",
         "interval": 1,
         "format-alt-click": "click",
         "format-alt": "{icon0}{icon1}{icon2}{icon3} {usage:>2}% ",
         "format-icons": ["▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"],
     },
+    "custom/rss": {
+        "format": "{} ",
+        "interval": 1,
+        "exec": "~/.local/bin/status/sb-news"
+    },
     "custom/net": {
-        "format": "{}  {}",
+        "format": "{}",
         "return-type": "json",
         "interval": 1,
-        "exec": "~/.local/bin/network"
+        "exec": "~/.local/bin/status/sb-network"
     },
     "clock": {
         "tooltip-format": "{:%A, %B %d, %Y}",
@@ -76,14 +76,14 @@
         "format-icons": [ "󰂎", "󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹" ],
 				"tooltip-format": "{capacity}% capacity"
     },
-    "bluetooth": {
-        "format": "",
-        "format-disabled": "", // an empty format will hide the module
-        "format-connected": " ",
-        "tooltip-format": " {device_alias}",
-        "tooltip-format-connected": "{device_enumerate}",
-        "tooltip-format-enumerate-connected": " {device_alias}"
-    },
+    // "bluetooth": {
+    //    "format": "",
+    //    "format-disabled": "", // an empty format will hide the module
+    //    "format-connected": " ",
+    //    "tooltip-format": " {device_alias}",
+    //    "tooltip-format-connected": "{device_enumerate}",
+    //    "tooltip-format-enumerate-connected": " {device_alias}"
+    //},
     "network": {
         // "format-wifi": "󰤨",
         "format-wifi": "",
@@ -91,15 +91,14 @@
         "format-ethernet": "",
 				"tooltip-format": "{essid} ({signalStrength}%) "
     },
-    // "custom/speedtest": {
-    //  "format": "{} {}",
-    //  "return-type": "json",
-    //   "interval": 1,
-    //    "exec": "~/.local/bin/sb-nettraf"
-   // },
+    "backlight": {
+      "device": "intel_backlight",
+      "format": "{percent}% {icon}",
+      "format-icons": ["", ""]
+    },
     "pulseaudio": {
         // "scroll-step": 1, // %, can be a float
-        "format": "{icon} {volume}%",
+        "format": "{volume}% {icon}",
         "format-bluetooth": " {icon} {volume} %",
         "format-muted": "󰖁",
 				"format-icons": {
@@ -112,8 +111,28 @@
 				},
 				"tooltip-format": "{volume}% volume"
 		},
-    "custom/power": {
-        "format": "󰐥",
-        "on-click": "sleep 0.15 && ~/.local/bin/powermenu"
-    }
+    "mpd": {
+      "format": "{stateIcon} {consumeIcon}{randomIcon}{repeatIcon}{singleIcon}{artist} - {album} - {title} ({elapsedTime:%M:%S}/{totalTime:%M:%S}) ",
+      "format-disconnected": "Disconnected ",
+      "format-stopped": "{consumeIcon}{randomIcon}{repeatIcon}{singleIcon}Stopped ",
+      "interval": 1,
+      "consume-icons": {
+        "on": " "
+      },
+      "random-icons": {
+        "on": " "
+      },
+      "repeat-icons": {
+        "on": " "
+      },
+      "single-icons": {
+        "on": "1 "
+      },
+      "state-icons": {
+        "paused": "",
+        "playing": ""
+      },
+      "tooltip-format": "MPD (connected)",
+      "tooltip-format-disconnected": "MPD (disconnected)"
+    },
 }
