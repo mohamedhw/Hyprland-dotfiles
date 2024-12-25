@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# Show the rofi menu and get the selected option
+option=$(echo -e "Shutdown\nReboot\nLogout" | rofi -dmenu -p "Power Menu" -theme-str '@import "themes/powermenu.rasi"')
+
+# Act based on the selection
+case "$option" in
+    Shutdown)
+        # Shut down the system
+        systemctl poweroff
+        ;;
+    Reboot)
+        # Reboot the system
+        systemctl reboot
+        ;;
+    Logout)
+        # Log out of Hyprland
+        hyprctl dispatch exit
+        ;;
+    *)
+        # If no valid option is selected, exit
+        exit 1
+        ;;
+esac
+

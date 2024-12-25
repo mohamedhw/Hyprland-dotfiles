@@ -1,0 +1,119 @@
+{
+    "layer": "top",
+    "height": 20,
+    "spacing": 5,
+    // Choose the order of the modules
+    "modules-left": [
+        "hyprland/workspaces"
+    ],
+    "modules-center": [
+        "hyprland/window"
+    ],
+    "modules-right": [
+      "custom/net",
+      "network",
+      "pulseaudio",
+      "bluetooth",
+      "cpu",
+      "memory",
+      "battery",
+	    "clock",
+		],
+		"hyprland/window": {
+			"separate-outputs": true
+		},
+    "hyprland/workspaces": {
+        "disable-scroll": true,
+        "all-outputs": true,
+        "on-click": "activate"
+    },
+    "tray": {
+        // "icon-size": 21,
+        "spacing": 10
+    },
+	//	"custom/pacman": {
+	//		"interval": 3600,
+	//		"return-type": "json",
+	//		"exec": "~/.local/bin/pacman-updates",
+	//		"exec-if": "exit 0",
+	//		"on-click": "kitty -e 'yay'; pkill -SIGRTMIN+8 waybar",
+	//		"signal": 8
+	//	},
+    "memory": {
+        "interval": 10,
+        "format": "{used:0.1f}G  ",
+        "on-click-right": "foot --title htop sh -c 'htop'"
+    },
+    "cpu": {
+        "format": " {usage}%",
+        "interval": 1,
+        "format-alt-click": "click",
+        "format-alt": "{icon0}{icon1}{icon2}{icon3} {usage:>2}% ",
+        "format-icons": ["▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"],
+    },
+    "custom/net": {
+        "format": "{}  {}",
+        "return-type": "json",
+        "interval": 1,
+        "exec": "~/.local/bin/network"
+    },
+    "clock": {
+        "tooltip-format": "{:%A, %B %d, %Y}",
+        "format": "{:%I:%M %p}"
+    },
+    "battery": {
+        "full-at": 100,
+        "states": {
+            "good": 76,
+            "warning": 21,
+            "critical": 16,
+        },
+        "format": "{capacity}% {icon}",
+        "format-charging": "{capacity}% 󰂄",
+        // "format-plugged": " ",
+        "format-full": "{capacity}% 󰁹",
+        "format-alt": "{icon} {time}",
+        "format-icons": [ "󰂎", "󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹" ],
+				"tooltip-format": "{capacity}% capacity"
+    },
+    "bluetooth": {
+        "format": "",
+        "format-disabled": "", // an empty format will hide the module
+        "format-connected": " ",
+        "tooltip-format": " {device_alias}",
+        "tooltip-format-connected": "{device_enumerate}",
+        "tooltip-format-enumerate-connected": " {device_alias}"
+    },
+    "network": {
+        // "format-wifi": "󰤨",
+        "format-wifi": "",
+        "format-disconnected": "󰤭",
+        "format-ethernet": "",
+				"tooltip-format": "{essid} ({signalStrength}%) "
+    },
+    // "custom/speedtest": {
+    //  "format": "{} {}",
+    //  "return-type": "json",
+    //   "interval": 1,
+    //    "exec": "~/.local/bin/sb-nettraf"
+   // },
+    "pulseaudio": {
+        // "scroll-step": 1, // %, can be a float
+        "format": "{icon} {volume}%",
+        "format-bluetooth": " {icon} {volume} %",
+        "format-muted": "󰖁",
+				"format-icons": {
+                  "headphone": "",
+                  "hands-free": "",
+                  "headset": "",
+                  "phone": "",
+                  "portable": "",
+					"default": ["", "", "󰕾"]
+				},
+				"tooltip-format": "{volume}% volume"
+		},
+    "custom/power": {
+        "format": "󰐥",
+        "on-click": "sleep 0.15 && ~/.local/bin/powermenu"
+    }
+}

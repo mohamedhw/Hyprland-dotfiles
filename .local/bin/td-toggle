@@ -1,0 +1,26 @@
+#!/bin/sh
+
+# If transmission-daemon is running, will ask to kill, else will ask to start.
+
+if pidof transmission-daemon >/dev/null ;
+then
+    # Ask if user wants to stop transmission-daemon using tofi
+    if [ "$(echo -e "No\nYes" | tofi --lines=2 --prompt "Turn off transmission-daemon?")" = "Yes" ]; then
+        killall transmission-daemon
+        notify-send "transmission-daemon disabled."
+    fi
+else
+    # Check if transmission-cli is installed before attempting to start transmission-daemon
+    if ! command -v transmission-cli >/dev/null; then
+        exit
+    fi
+    # Ask if user wants to start transmission-daemon using tofi
+    if [ "$(echo -e "No\nYes" | tofi --lines=2 --prompt "Turn on transmission-daemon?")" = "Yes" ]; then
+        transmission-daemon
+        notify-send "transmission-daemon enabled."
+    fi
+fi
+
+# Sleep for 3 seconds and send signal to update the status bar (e.g., dwmblocks)
+sleep 3 && pkill -RTMIN+7 "${STATUSBAR:-dwmblocks}"
+

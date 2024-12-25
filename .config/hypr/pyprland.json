@@ -1,0 +1,17 @@
+{
+  "pyprland": {
+    "plugins": ["scratchpads", "magnify"]
+  },
+  "scratchpads": {
+      "term": {
+        "command": "alacritty --class scratchpad",
+        "margin": 50
+      },
+      "htop": {
+        "command": "alacritty --class scratchpad -e htop",
+        "margin": 50,
+        "unfocused": "hide",
+        "animation": "fromTop",
+      },
+  }
+}

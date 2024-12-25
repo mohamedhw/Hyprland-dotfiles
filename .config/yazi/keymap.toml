@@ -1,0 +1,28 @@
+# A TOML linter such as https://taplo.tamasfe.dev/ can use this schema to validate your config.
+# If you encounter any issues, please make an issue at https://github.com/yazi-rs/schemas.
+"$schema" = "https://yazi-rs.github.io/schemas/keymap.json"
+
+[manager]
+
+prepend_keymap = [
+	{ on = [ "j" ], run = [ "plugin arrow --args=1"],  desc = "Move selection downwards, or wrap." },
+	{ on = [ "k" ], run = [ "plugin arrow --args=-1"], desc = "Move selection upwards, or wrap." },
+	{ on = [ "l" ], run = [ "plugin smart-enter", "escape --visual --select" ], desc = "Enter the child directory, or open file." },
+	{ on = [ "L" ], run = "plugin smart-enter --args='detatch'", desc = "Open in new window." },
+  { on = [ "T" ], run = "plugin max-preview", desc = "Maximize preview pane"},
+  { on = [ "d" ], run = [ "yank --cut" ], desc = "cut"},
+  { on = [ "n" ], run = "create", desc = "Create a file or directory (ends with / for directories)" },
+  # { on = [ "w" ], run = '''
+  #     shell setsid -f $TERMINAL >~/terminal_debug.log 2>&1
+  # ''', desc = "open terminal in pwd"},
+  { on = [ "<C-n>"], run = '''
+      shell 'dragon -x -i -T "$1"' --confirm
+  ''', desc = "Open file with dragon"},
+  { on = [ "=" ], run = """
+      shell 'printf "Mode Bits: "; read ans; chmod $ans "$@"' --block --confirm
+  """, desc = "chmod" },
+  { on = [ "<A-Enter>" ], run = """
+      shell '$TERMINAL -e $SHELL -c -i \"cd $PWD && ya && exec $SHELL\"' --orphan --confirm
+  """, desc = "Spawn new yazi window in CWD" },
+]
+
