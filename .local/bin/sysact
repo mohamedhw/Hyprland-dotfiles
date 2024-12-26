@@ -17,7 +17,7 @@ if ! command -v swaylock >/dev/null; then
   exit 1
 fi
 
-case "$(printf "lock\nlogout\nreload\nhibernate\nreboot\nshutdown\nsleep\ndisplay off" | tofi --prompt-text 'Action: ')" in
+case "$(printf "lock\nlogout\nhyprReload\nhibernate\nreboot\nshutdown\nsleep\ndisplay off" | tofi --prompt-text 'Action: ')" in
 'lock')
   exec swaylock -f
   ;;
