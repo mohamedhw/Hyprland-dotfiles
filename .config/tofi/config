@@ -1,0 +1,21 @@
+anchor = top
+width = 100%
+height = 24
+horizontal = true
+font-size = 11
+font = /usr/share/fonts/TTF/JetBrainsMono-Medium.ttf
+prompt-text = ""
+outline-width = 0
+border-width = 0
+background-color = #1d1f21
+selection-color = #268bd2
+selection-background = #444
+num-results = 7
+min-input-width = 240
+result-spacing = 25
+padding-top = 4
+padding-bottom = 0
+padding-left = 5
+padding-right = 0
+hint-font = false
+
