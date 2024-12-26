@@ -1,0 +1,6 @@
+#!/bin/sh
+
+# Check the current status of MPC
+if mpc status | grep -qE '\[(paused|playing)\]'; then
+  mpc toggle
+fi

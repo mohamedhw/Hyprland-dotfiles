@@ -1,26 +1,26 @@
-#!/bin/bash
+#!/bin/sh
 
 # Function to update network statistics
 update() {
-	sum=0
-	for arg; do
-		read -r i <"$arg"
-		sum=$((sum + i))
-	done
-	cache="/tmp/${1##*/}"
-	[ -f "$cache" ] && read -r old <"$cache" || old=0
-	printf "%d\n" "$sum" >"$cache"
-	printf "%d\n" $((sum - old))
+  sum=0
+  for arg; do
+    read -r i <"$arg"
+    sum=$((sum + i))
+  done
+  cache="/tmp/${1##*/}"
+  [ -f "$cache" ] && read -r old <"$cache" || old=0
+  printf "%d\n" "$sum" >"$cache"
+  printf "%d\n" $((sum - old))
 }
 
 # Function to format bytes
 format_bytes() {
-	bytes=$1
-	if [ "$bytes" -lt 1048576 ]; then
-		printf "%.2f KB\n" "$(awk "BEGIN {printf \"%.2f\", $bytes / 1024}")"
-	else
-		printf "%.2f MB\n" "$(awk "BEGIN {printf \"%.2f\", $bytes / 1048576}")"
-	fi
+  bytes=$1
+  if [ "$bytes" -lt 1048576 ]; then
+    printf "%.2f KB\n" "$(awk "BEGIN {printf \"%.2f\", $bytes / 1024}")"
+  else
+    printf "%.2f MB\n" "$(awk "BEGIN {printf \"%.2f\", $bytes / 1048576}")"
+  fi
 }
 
 # Update network statistics

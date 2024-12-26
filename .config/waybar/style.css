@@ -144,7 +144,7 @@ button {
   color: @peach;
 }
 
-#pulseaudio {
+#pulseaudio , #backlight, #clock, #mpd{
   color: @mauve;
 }
 

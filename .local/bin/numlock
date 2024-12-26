@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Activate numlock
-swaymsg input "CAPS_LOCK,NUM_LOCK" 
+swaymsg input "CAPS_LOCK,NUM_LOCK"

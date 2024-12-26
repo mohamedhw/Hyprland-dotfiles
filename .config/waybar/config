@@ -129,6 +129,9 @@
         "on": "1 "
       },
       "state-icons": {
+        "": "",
+      },
+      "state-icons": {
         "paused": "",
         "playing": ""
       },
