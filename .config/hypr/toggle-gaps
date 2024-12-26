@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+
+# Get active workspace id
+id=$(hyprctl -j activeworkspace | jq ".id")
+
+# Set range variable to match the workspace
+rid="r[$id-$id]"
+
+# Default gaps values
+gaps_in_default=5
+gaps_out_default=20
+
+# Current gaps for active workspace
+gaps_in_current=$(hyprctl workspacerules -j | jq --arg rid "$rid" '[.[] | select(.workspaceString | startswith($rid)) | .gapsIn[0]] | .[0]')
+gaps_out_current=$(hyprctl workspacerules -j | jq --arg rid "$rid" '[.[] | select(.workspaceString | startswith($rid)) | .gapsOut[0]] | .[0]')
+
+# Fetch current global settings
+current_gaps_in=$(hyprctl -j getoption general:gaps_in | jq '.current' | awk '{print $1}')
+current_gaps_out=$(hyprctl -j getoption general:gaps_out | jq '.current' | awk '{print $1}')
+current_border_size=$(hyprctl -j getoption general:border_size | jq '.current' | awk '{print $1}')
+current_rounding=$(hyprctl -j getoption decoration:rounding | jq '.current' | awk '{print $1}')
+current_shadow=$(hyprctl -j getoption decoration:drop_shadow | jq '.current')
+
+# Toggle logic for workspace and global settings
+if [[ ("$gaps_in_current" == "null" && "$gaps_out_current" == "null") ||
+  ("$gaps_in_current" == "$gaps_in_default" && "$gaps_out_current" == "$gaps_out_default") ]]; then
+  # Turn off gaps for the active workspace and global settings
+  hyprctl keyword workspace $rid f[1], gapsin:0, gapsout:0
+  hyprctl keyword workspace $rid w[tv1], gapsin:0, gapsout:0
+  hyprctl --batch "keyword general:gaps_in 0 ; \
+                   keyword general:gaps_out 0 ; \
+                   keyword general:border_size 0 ; \
+                   keyword decoration:rounding 0 ; \
+                   keyword decoration:drop_shadow false"
+else
+  # Restore defaults for the active workspace and global settings
+  hyprctl keyword workspace $rid f[1], gapsin:$gaps_in_default, gapsout:$gaps_out_default
+  hyprctl keyword workspace $rid w[tv1], gapsin:$gaps_in_default, gapsout:$gaps_out_default
+  hyprctl --batch "keyword general:gaps_in $gaps_in_default ; \
+                   keyword general:gaps_out $gaps_out_default ; \
+                   keyword general:border_size 2 ; \
+                   keyword decoration:rounding 10 ; \
+                   keyword decoration:drop_shadow true"
+fi
