@@ -1,6 +1,7 @@
 {
     "layer": "top",
     "height": 24,
+    "width": "100vh",
     "spacing": 5,
     // Choose the order of the modules
     "modules-left": [
@@ -116,6 +117,7 @@
       "format-disconnected": "Disconnected ",
       "format-stopped": "{consumeIcon}{randomIcon}{repeatIcon}{singleIcon}Stopped ",
       "interval": 1,
+      "max-length": 100,
       "consume-icons": {
         "on": " "
       },
