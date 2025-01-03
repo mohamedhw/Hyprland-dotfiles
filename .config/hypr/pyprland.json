@@ -22,7 +22,13 @@
       "command": "alacritty --class scratchpad -e htop",
       "margin": 50,
       "unfocused": "hide",
-      "animation": "fromTop"
+      "animation": "fromBottom"
+    },
+    "news": {
+      "command": "alacritty --class scratchpad -e newsboat",
+      "margin": 50,
+      "unfocused": "hide",
+      "animation": "fromRight"
     }
   }
 }
