@@ -1,0 +1,59 @@
+#!/bin/bash
+
+# Battery alert script for Hyprland with dunst
+# Save this as ~/.config/hypr/scripts/battery-alert.sh
+
+# Battery percentage threshold for alerts
+WARNING_LEVEL=20
+CRITICAL_LEVEL=10
+
+# Notification IDs to update existing notifications
+BATTERY_WARNING_NOTIF_ID=1000
+BATTERY_CRITICAL_NOTIF_ID=1001
+
+# Sound files - you can replace these with your preferred sound files
+WARNING_SOUND="/usr/share/sounds/freedesktop/stereo/dialog-warning.oga"
+CRITICAL_SOUND="/usr/share/sounds/freedesktop/stereo/dialog-error.oga"
+
+# Function to play sound
+play_sound() {
+  local sound_file=$1
+
+  # Try paplay first (PulseAudio)
+  if command -v paplay >/dev/null 2>&1; then
+    paplay "$sound_file" &
+  # Fall back to play (Sox)
+  elif command -v play >/dev/null 2>&1; then
+    play -q "$sound_file" &
+  fi
+}
+
+check_battery() {
+  # Get battery percentage
+  battery_level=$(acpi -b | grep -P -o '[0-9]+(?=%)')
+  charging_status=$(acpi -b | grep -c "Charging")
+
+  # Only send notifications if not charging
+  if [ "$charging_status" -eq 0 ]; then
+    if [ "$battery_level" -le "$CRITICAL_LEVEL" ]; then
+      dunstify -a "Battery Alert" -u critical -i battery-empty \
+        -r "$BATTERY_CRITICAL_NOTIF_ID" \
+        "Battery Critical!" "Battery level is ${battery_level}%\nPlease connect charger immediately"
+      play_sound "$CRITICAL_SOUND"
+    elif [ "$battery_level" -le "$WARNING_LEVEL" ]; then
+      dunstify -a "Battery Alert" -u normal -i battery-low \
+        -r "$BATTERY_WARNING_NOTIF_ID" \
+        "Battery Low" "Battery level is ${battery_level}%"
+      play_sound "$WARNING_SOUND"
+    fi
+  fi
+}
+
+# Run initial check
+check_battery
+
+# Monitor battery status continuously
+while true; do
+  sleep 300 # Check every 5 minutes
+  check_battery
+done
