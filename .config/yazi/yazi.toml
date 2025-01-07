@@ -40,11 +40,23 @@ edit = [
 music = [
 	{ run = 'ncmpcpp "$@"', block = true, for = "unix" },
 ]
+pdf = [
+	{ run = 'zathura "$@"', block = true, for = "unix" },
+]
 document = [
 	{ run = 'libreoffice "$@"', block = true, for = "unix" },
 ]
 view = [
 	{ run = 'nsxiv "$@" &', block = true, for = "unix" },
+]
+archiveZip = [
+	{ run = 'unzip "$@" &', block = true, for = "unix" },
+]
+archiveTar = [
+	{ run = 'unzip "$@" &', block = true, for = "unix" },
+]
+archiveRar = [
+	{ run = 'unzip "$@" &', block = true, for = "unix" },
 ]
 
 [open]
@@ -102,7 +114,6 @@ rules = [
   { name = "*.ico", use = [ "view" ] },
 
   # -- Document Files
-  { name = "*.pdf", use = [ "document" ] },
   { name = "*.doc", use = [ "document" ] },
   { name = "*.docx", use = [ "document" ] },
   { name = "*.xlsx", use = [ "document" ] },
@@ -116,14 +127,20 @@ rules = [
   { name = "*.mobi", use = [ "document" ] },
   { name = "*.azw3", use = [ "document" ] },
 
+  #zathura
+  { name = "*.pdf", use = [ "pdf" ] },
+  { name = "*.cbz", use = [ "pdf" ] },
+
   # -- Archive Files
-  { name = "*.zip", use = [ "archive" ] },
-  { name = "*.tar", use = [ "archive" ] },
-  { name = "*.tar.gz", use = [ "archive" ] },
+  { name = "*.zip", use = [ "archiveZip" ] },
   { name = "*.tgz", use = [ "archive" ] },
-  { name = "*.rar", use = [ "archive" ] },
-  { name = "*.7z", use = [ "archive" ] },
-  { name = "*.iso", use = [ "mount" ] },
+
+  #tar
+  { name = "*.tar", use = [ "archiveTar" ] },
+  { name = "*.tar.gz", use = [ "archiveTar" ] },
+
+  #rar
+  { name = "*.rar", use = [ "archiveRar" ] },
 
   
   #--Fallback

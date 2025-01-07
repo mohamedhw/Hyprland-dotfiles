@@ -23,12 +23,6 @@
       "margin": 50,
       "unfocused": "hide",
       "animation": "fromBottom"
-    },
-    "news": {
-      "command": "alacritty --class scratchpad -e newsboat",
-      "margin": 50,
-      "unfocused": "hide",
-      "animation": "fromRight"
     }
   }
 }

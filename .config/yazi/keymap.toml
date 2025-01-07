@@ -9,9 +9,12 @@ prepend_keymap = [
 	{ on = [ "k" ], run = [ "plugin arrow --args=-1"], desc = "Move selection upwards, or wrap." },
 	{ on = [ "l" ], run = [ "plugin smart-enter", "escape --visual --select" ], desc = "Enter the child directory, or open file." },
 	{ on = [ "L" ], run = "plugin smart-enter --args='detatch'", desc = "Open in new window." },
-  { on = [ "T" ], run = "plugin max-preview", desc = "Maximize preview pane"},
+	{ on = [ "<Right>" ], run = [ "plugin smart-enter"], desc = "Enter the child directory, or open file." },
+  # { on = [ "T" ], run = "plugin max-preview", desc = "Maximize preview pane"},
   { on = [ "d" ], run = [ "yank --cut" ], desc = "cut"},
   { on = [ "n" ], run = "create", desc = "Create a file or directory (ends with / for directories)" },
+  { on = [ "t" ], run = '''shell 'nsxiv -t "$(pwd)"'  --confirm''', desc = "nsxiv in thumb mode"},
+  # { on = [ "E" ], run = '''shell 'extract "$1"'  --confirm''', desc = "extract archives"},
   # { on = [ "w" ], run = '''
   #     shell setsid -f $TERMINAL >~/terminal_debug.log 2>&1
   # ''', desc = "open terminal in pwd"},
