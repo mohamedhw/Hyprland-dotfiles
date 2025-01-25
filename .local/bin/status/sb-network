@@ -31,8 +31,8 @@ tx_diff=$(update /sys/class/net/[ew]*/statistics/tx_bytes)
 rx_formatted=$(format_bytes "$rx_diff")
 tx_formatted=$(format_bytes "$tx_diff")
 
-# Add style to the text
-text="<span foreground='#005500'>$rx_formatted</span> \t <span foreground='#800000'>$tx_formatted</span> "
+# Add style to the text using Waybar's color palette
+text="<span foreground='#89b4fa'>$rx_formatted</span> \t <span foreground='#f38ba8'>$tx_formatted</span> "
 
 # Print the styled text
 echo "{\"text\":\"$text\", \"tooltip\":\"Network Statistics\",\"class\":\"$class\"}"
