@@ -3,52 +3,53 @@
     "height": 24,
     "width": "100vh",
     "spacing": 5,
-    // Choose the order of the modules
     "modules-left": [
         "hyprland/workspaces",
-        "mpd",
+        "mpd"
     ],
-//   "modules-center": [
-//       "hyprland/window",
-//   ],
     "modules-right": [
-      "custom/rss",
-      "custom/net",
-      "network",
-      "pulseaudio",
-      "backlight",
-//     "bluetooth",
-      "cpu",
-      "memory",
-      "battery",
-	    "clock",
-		],
-//		"hyprland/window": {
-//			"separate-outputs": true
-//		},
+        "custom/rss",
+        "custom/net",
+        "network",
+        "pulseaudio",
+        "backlight",
+        "temperature",
+        "cpu",
+        "memory",
+        "battery",
+        "clock"
+    ],
     "hyprland/workspaces": {
-        "disable-scroll": true,
-        "all-outputs": true,
-        "on-click": "activate"
+        "ignore-workspaces": [
+            "(special:)?chrome-sharing-indicator"
+        ],
+        "format": "{name}",  // Use workspace names (numbers) instead of icons
+        "format-icons": {
+            "default": "{name}"  // Fallback to workspace numbers
+        }
     },
     "tray": {
-        // "icon-size": 21,
         "spacing": 10
     },
     "memory": {
         "interval": 10,
-        "format": "{used:0.1f}G  ",
+        "format": " {used:0.1f}G",
         "on-click-right": "foot --title htop sh -c 'htop'"
     },
     "cpu": {
-        "format": "{usage}% ",
+        "format": " {usage}%",
         "interval": 1,
-        "format-alt-click": "click",
-        "format-alt": "{icon0}{icon1}{icon2}{icon3} {usage:>2}% ",
-        "format-icons": ["▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"],
+        "format-alt": "{icon0}{icon1}{icon2}{icon3} {usage:>2}%",
+        "format-icons": ["▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"]
+    },
+    "temperature": {
+        "thermal-zone": 2,
+        "critical-threshold": 80,
+        "format-critical": " {temperatureC}°C",
+        "format": " {temperatureC}°C"
     },
     "custom/rss": {
-        "format": "{} ",
+        "format": " {}",
         "interval": 1,
         "exec": "~/.local/bin/status/sb-news"
     },
@@ -60,84 +61,66 @@
     },
     "clock": {
         "tooltip-format": "{:%A, %B %d, %Y}",
-        "format": "{:%I:%M %p}"
+        "format": " {:%I:%M %p}"
     },
     "battery": {
         "full-at": 100,
         "states": {
             "good": 76,
             "warning": 21,
-            "critical": 16,
+            "critical": 16
         },
-        "format": "{capacity}% {icon}",
-        "format-charging": "{capacity}% 󰂄",
-        // "format-plugged": " ",
-        "format-full": "{capacity}% 󰁹",
-        "format-alt": "{icon} {time}",
-        "format-icons": [ "󰂎", "󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹" ],
-				"tooltip-format": "{capacity}% capacity"
+        "format": "{icon} {capacity}%",
+        "format-charging": "󰂄 {capacity}%",
+        "format-plugged": " {capacity}%",
+        "format-full": "󰁹 {capacity}%",
+        "format-icons": ["󰂎", "󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"]
     },
-    // "bluetooth": {
-    //    "format": "",
-    //    "format-disabled": "", // an empty format will hide the module
-    //    "format-connected": " ",
-    //    "tooltip-format": " {device_alias}",
-    //    "tooltip-format-connected": "{device_enumerate}",
-    //    "tooltip-format-enumerate-connected": " {device_alias}"
-    //},
     "network": {
-        // "format-wifi": "󰤨",
-        "format-wifi": "",
-        "format-disconnected": "󰤭",
-        "format-ethernet": "",
-				"tooltip-format": "{essid} ({signalStrength}%) "
+        "format-wifi": " {essid}",
+        "format-disconnected": "󰤭 Disconnected",
+        "format-ethernet": " Ethernet",
+        "tooltip-format": "{essid} ({signalStrength}%)"
     },
     "backlight": {
-      "device": "intel_backlight",
-      "format": "{percent}% {icon}",
-      "format-icons": ["", ""]
+        "device": "intel_backlight",
+        "format": " {percent}%",
+        "format-icons": ["", ""]
     },
     "pulseaudio": {
-        // "scroll-step": 1, // %, can be a float
-        "format": "{volume}% {icon}",
-        "format-bluetooth": " {icon} {volume} %",
-        "format-muted": "󰖁",
-				"format-icons": {
-                  "headphone": "",
-                  "hands-free": "",
-                  "headset": "",
-                  "phone": "",
-                  "portable": "",
-					"default": ["", "", "󰕾"]
-				},
-				"tooltip-format": "{volume}% volume"
-		},
-    "mpd": {
-      "format": "{stateIcon} {consumeIcon}{randomIcon}{repeatIcon}{singleIcon}{artist} - {album} - {title} ({elapsedTime:%M:%S}/{totalTime:%M:%S}) ",
-      "format-disconnected": "Disconnected ",
-      "format-stopped": "{consumeIcon}{randomIcon}{repeatIcon}{singleIcon}Stopped ",
-      "interval": 1,
-      "max-length": 100,
-      "consume-icons": {
-        "on": " "
-      },
-      "random-icons": {
-        "on": " "
-      },
-      "repeat-icons": {
-        "on": " "
-      },
-      "single-icons": {
-        "on": "1 "
-      },
-      "state-icons": {
-        "": "",
-      },
-      "state-icons": {
-        "paused": "",
-        "playing": ""
-      },
-      "tooltip-format": "MPD (connected)",
-      "tooltip-format-disconnected": "MPD (disconnected)"
+        "format": "{icon} {volume}%",
+        "format-bluetooth": " {icon} {volume}%",
+        "format-muted": "󰖁 Muted",
+        "format-icons": {
+            "headphone": "",
+            "hands-free": "",
+            "headset": "",
+            "phone": "",
+            "portable": "",
+            "default": ["", "", "󰕾"]
+        }
     },
+    "mpd": {
+        "format": "{stateIcon} {consumeIcon}{randomIcon}{repeatIcon}{singleIcon}{artist} - {title} ({elapsedTime:%M:%S}/{totalTime:%M:%S})",
+        "format-disconnected": " Disconnected",
+        "format-stopped": "{consumeIcon}{randomIcon}{repeatIcon}{singleIcon}Stopped",
+        "interval": 1,
+        "max-length": 100,
+        "consume-icons": {
+            "on": " "
+        },
+        "random-icons": {
+            "on": " "
+        },
+        "repeat-icons": {
+            "on": " "
+        },
+        "single-icons": {
+            "on": "1 "
+        },
+        "state-icons": {
+            "paused": "",
+            "playing": ""
+        }
+    }
 }
