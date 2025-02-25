@@ -1,0 +1,143 @@
+#!/bin/sh
+APIKEY=PKRo7DrFIALgMRRNqFbvESxQ76W8II8d
+
+CACHEDIR=/home/saul/.cache/wallhaven
+DOWNLOADDIR=/home/saul/Pix/wallhaven/
+
+# Menu options
+choices="search
+toplist
+latest
+random
+views"
+
+ranges="1d
+3d
+1M
+3M
+6M
+1y"
+
+# Ensure directories exist
+mkdir -p "$CACHEDIR"
+mkdir -p "$DOWNLOADDIR"
+
+# Clear cache before starting
+rm -f "$CACHEDIR"/*
+
+# Get initial choice
+chosen=$(printf "%s" "$choices" | tofi --prompt-text="Select option:")
+[ -z "$chosen" ] && exit 0
+
+# Process chosen option
+case "$chosen" in
+search)
+  KEYWORD=q
+  VAL=$(printf "" | tofi --prompt-text="Search:")
+  [ -z "$VAL" ] && exit 0
+  VAL="${VAL}&sorting=relevance"
+  VAL=$(echo "$VAL" | tr ' ' '+')
+  ;;
+toplist)
+  KEYWORD=sorting
+  VAL=toplist
+  RANGE=topRange
+  TIMERANGE=$(printf "%s" "$ranges" | tofi --prompt-text="Select time range:")
+  [ -z "$TIMERANGE" ] && exit 0
+  ;;
+latest)
+  KEYWORD=sorting
+  VAL=date_added
+  ;;
+random)
+  KEYWORD=sorting
+  VAL=random
+  ;;
+views)
+  KEYWORD=sorting
+  VAL=views
+  ;;
+*)
+  notify-send "🔴 WallHaven Error" "Invalid option selected"
+  exit 1
+  ;;
+esac
+
+# Get page number
+PAGE=$(printf "1\n2\n3\n4\n5" | tofi --prompt-text="Select number of pages:")
+[ -z "$PAGE" ] && exit 0
+
+if ! echo "$PAGE" | grep -q '^[1-5]$'; then
+  notify-send "🔴 WallHaven Error" "Invalid page number"
+  exit 1
+fi
+
+# Create a mapping file for thumbnails to full URLs
+: >"$CACHEDIR/mapping.txt"
+
+# Fetch wallpapers
+notify-send " WallHaven" "Fetching $PAGE page(s)..."
+
+# Fetch pages
+for i in $(seq 1 "$PAGE"); do
+  if [ -n "$TIMERANGE" ]; then
+    url="https://wallhaven.cc/api/v1/search?apikey=$APIKEY&$KEYWORD=$VAL&$RANGE=$TIMERANGE&page=$i"
+  else
+    url="https://wallhaven.cc/api/v1/search?apikey=$APIKEY&$KEYWORD=$VAL&page=$i"
+  fi
+
+  # Fetch and process each page
+  curl -s "$url" | jq -r '.data[] | .thumbs.small + " " + .path' >>"$CACHEDIR/mapping.txt"
+done
+
+# Check if we got any results
+if [ ! -s "$CACHEDIR/mapping.txt" ]; then
+  notify-send "🔴 WallHaven Error" "No results found"
+  rm -f "$CACHEDIR"/*
+  exit 1
+fi
+
+# Download thumbnails
+notify-send " WallHaven" "Downloading thumbnails..."
+
+while read -r line; do
+  thumb_url=$(echo "$line" | cut -d' ' -f1)
+  wget -q -P "$CACHEDIR" "$thumb_url" || {
+    notify-send "🔴 WallHaven Error" "Failed to download thumbnail"
+    continue
+  }
+done <"$CACHEDIR/mapping.txt"
+
+# Show thumbnails and get selection
+SELECTED=$(find "$CACHEDIR" -name "*.jpg" | nsxiv -tio)
+
+# Check if any images were selected
+if [ -z "$SELECTED" ]; then
+  notify-send "🔴 WallHaven" "No images selected"
+  rm -f "$CACHEDIR"/*
+  exit 0
+fi
+
+# Count selected images
+NUM=$(echo "$SELECTED" | wc -l)
+notify-send " WallHaven" "Downloading $NUM selected images..."
+
+# Download selected images
+echo "$SELECTED" | while read -r selected_thumb; do
+  thumb_base=$(basename "$selected_thumb")
+  thumb_url=$(grep "$thumb_base" "$CACHEDIR/mapping.txt" | cut -d' ' -f1)
+  full_url=$(grep "$thumb_base" "$CACHEDIR/mapping.txt" | cut -d' ' -f2)
+
+  if [ -n "$full_url" ]; then
+    if wget -q -P "$DOWNLOADDIR" "$full_url"; then
+      notify-send " WallHaven" "Downloaded: $(basename "$full_url")"
+    else
+      notify-send "🔴 WallHaven" "Failed to download: $(basename "$full_url")"
+    fi
+  fi
+done
+
+# Cleanup and finish
+rm -f "$CACHEDIR"/*
+notify-send " WallHaven" "Download complete!"
+exit 0
