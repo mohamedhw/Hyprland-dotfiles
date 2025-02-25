@@ -1,7 +1,7 @@
 * {
     border: none;
-    font-family: "OverpassMono", "Font Awesome 6 Free";
-    font-size: 14px;
+    font-family: "/usr/share/fonts/TTF/JetBrainsMono-Medium.ttf", "OverpassMono", "Font Awesome 6 Free";
+    font-size: 18px;
     min-height: 0;
 }
 
