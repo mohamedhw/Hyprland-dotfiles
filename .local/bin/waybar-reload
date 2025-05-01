@@ -1,0 +1,8 @@
+#!/bin/sh
+
+while true; do
+  killall waybar
+  waybar &
+  disown
+  sleep 1800
+done
