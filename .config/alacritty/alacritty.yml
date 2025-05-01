@@ -1,0 +1,7 @@
+key_bindings:
+  # Zoom in with Alt+Shift+k
+  - { key: K, mods: Alt|Shift, action: IncreaseFontSize }
+
+  # Zoom out with Alt+Shift+j
+  - { key: J, mods: Alt|Shift, action: DecreaseFontSize }
+
