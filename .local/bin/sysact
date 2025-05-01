@@ -1,0 +1,46 @@
+#!/bin/sh
+# A tofi wrapper script for system functions with enhanced safety
+set -eu
+
+case "$(readlink -f /sbin/init)" in
+*systemd*) ctl='systemctl' ;;
+*) ctl='loginctl' ;;
+esac
+
+if ! command -v tofi >/dev/null; then
+  notify-send "Error" "tofi is not installed"
+  exit 1
+fi
+
+if ! command -v swaylock >/dev/null; then
+  notify-send "Error" "swaylock is not installed"
+  exit 1
+fi
+
+case "$(printf "lock\nlogout\nhyprReload\nhibernate\nreboot\nshutdown\nsleep\ndisplay off" | tofi --prompt-text 'Action: ')" in
+'lock')
+  exec swaylock -f
+  ;;
+"logout")
+  hyprctl dispatch exit && sleep 1 && killall Hyprland
+  ;;
+"reload")
+  exec hyprctl reload
+  ;;
+'hibernate')
+  swaylock -f && $ctl hibernate
+  ;;
+'sleep')
+  swaylock -f && $ctl suspend
+  ;;
+'reboot')
+  $ctl --no-wall reboot
+  ;;
+'shutdown')
+  $ctl --no-wall poweroff
+  ;;
+'display off')
+  exec hyprctl dispatch dpms off
+  ;;
+*) exit 1 ;;
+esac

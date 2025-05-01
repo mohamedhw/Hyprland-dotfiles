@@ -1,0 +1,151 @@
+#!/bin/bash
+
+# Screen recording script for Hyprland on Arch Linux using FFmpeg
+
+# Default settings
+OUTPUT_FILE="screen_recording_$(date +%Y%m%d_%H%M%S).mp4"
+FRAMERATE=30
+RESOLUTION=""
+AUDIO_DEVICE=""
+DURATION=""
+MONITOR=""
+
+# Function to display usage information
+usage() {
+  echo "Hyprland Screen Recording Script"
+  echo "Usage: $0 [options]"
+  echo ""
+  echo "Options:"
+  echo "  -o, --output FILE       Specify output filename (default: screen_recording_YYYYMMDD_HHMMSS.mp4)"
+  echo "  -f, --framerate FPS     Set framerate (default: 30)"
+  echo "  -r, --resolution WxH    Set custom resolution (default: monitor resolution)"
+  echo "  -a, --audio DEVICE      Record with audio from specified device"
+  echo "  -d, --duration TIME     Set recording duration (e.g., 60 for 60 seconds)"
+  echo "  -m, --monitor NAME      Specify monitor to record (default: first monitor)"
+  echo "  -h, --help              Display this help and exit"
+  echo ""
+  echo "Press q to stop recording"
+  exit 1
+}
+
+# Parse command-line arguments
+while [[ $# -gt 0 ]]; do
+  case $1 in
+  -o | --output)
+    OUTPUT_FILE="$2"
+    shift 2
+    ;;
+  -f | --framerate)
+    FRAMERATE="$2"
+    shift 2
+    ;;
+  -r | --resolution)
+    RESOLUTION="$2"
+    shift 2
+    ;;
+  -a | --audio)
+    AUDIO_DEVICE="$2"
+    shift 2
+    ;;
+  -d | --duration)
+    DURATION="$2"
+    shift 2
+    ;;
+  -m | --monitor)
+    MONITOR="$2"
+    shift 2
+    ;;
+  -h | --help)
+    usage
+    ;;
+  *)
+    echo "Unknown option: $1"
+    usage
+    ;;
+  esac
+done
+
+# Check if running on Wayland
+if [ -z "$WAYLAND_DISPLAY" ]; then
+  echo "Error: Wayland display not detected. Are you running Hyprland?"
+  exit 1
+fi
+
+# Check if required tools are installed
+command -v ffmpeg >/dev/null 2>&1 || {
+  echo "Error: FFmpeg not found. Please install it."
+  exit 1
+}
+command -v wlr-randr >/dev/null 2>&1 || {
+  echo "Error: wlr-randr not found. Please install it."
+  exit 1
+}
+command -v slurp >/dev/null 2>&1 || {
+  echo "Error: slurp not found. Please install it."
+  exit 1
+}
+command -v wf-recorder >/dev/null 2>&1 || {
+  echo "Error: wf-recorder not found. Please install it."
+  exit 1
+}
+
+# List available monitors
+echo "Available monitors:"
+wlr-randr | grep -E '^\S+' | cut -d' ' -f1
+
+# Get monitor to record
+if [ -z "$MONITOR" ]; then
+  echo "No monitor specified. Select a region to record:"
+  GEOMETRY=$(slurp)
+  echo "Selected region: $GEOMETRY"
+else
+  echo "Recording monitor: $MONITOR"
+  GEOMETRY=$(wlr-randr | grep "$MONITOR" -A1 | grep -oP '\d+x\d+\+\d+\+\d+')
+  echo "Monitor geometry: $GEOMETRY"
+fi
+
+# If no geometry was selected/found, exit
+if [ -z "$GEOMETRY" ]; then
+  echo "Error: No recording region selected."
+  exit 1
+fi
+
+# Extract resolution from geometry if not specified
+if [ -z "$RESOLUTION" ]; then
+  RESOLUTION=$(echo "$GEOMETRY" | cut -d'+' -f1)
+  echo "Using resolution: $RESOLUTION"
+fi
+
+# List available audio devices
+echo "Available audio input devices:"
+pactl list short sources | grep -v ".monitor" | grep -v "auto_null"
+
+# Build recording command
+if [ -n "$AUDIO_DEVICE" ]; then
+  echo "Recording with audio from device: $AUDIO_DEVICE"
+  AUDIO_OPTS="-a -m alsa_input.$AUDIO_DEVICE"
+else
+  AUDIO_OPTS=""
+fi
+
+if [ -n "$DURATION" ]; then
+  DURATION_OPTS="-t $DURATION"
+else
+  DURATION_OPTS=""
+fi
+
+# Use wf-recorder which is more suitable for Wayland/Hyprland
+RECORD_CMD="wf-recorder -f $OUTPUT_FILE -g \"$GEOMETRY\" -r $FRAMERATE $AUDIO_OPTS $DURATION_OPTS"
+
+# Display the command that will be executed
+echo "Executing: $RECORD_CMD"
+echo "Recording to file: $OUTPUT_FILE"
+echo "Press Ctrl+C to stop recording"
+
+# Execute the command
+eval "$RECORD_CMD"
+
+echo "Recording finished: $OUTPUT_FILE"
+echo "Converting to MP4 with FFmpeg for better compatibility..."
+ffmpeg -i "$OUTPUT_FILE" -c:v libx264 -preset fast -c:a aac "${OUTPUT_FILE%.*}_converted.mp4"
+echo "Conversion complete: ${OUTPUT_FILE%.*}_converted.mp4"

@@ -1,0 +1,146 @@
+#!/bin/bash
+# Transmission and Stig Launcher
+# Enhanced script to manage Transmission daemon and launch Stig TUI client
+
+# Configuration
+TERMINAL="kitty" # Terminal emulator to use
+DAEMON_NAME="transmission.service"
+STIG_CMD="stig"
+
+# Logging function
+log_message() {
+  local level="$1"
+  local message="$2"
+  local timestamp=$(date "+%Y-%m-%d %H:%M:%S")
+  echo "[$timestamp] [$level] $message" >>"$HOME/.transmission-stig-launcher.log"
+}
+
+# Show notification with logging
+show_notification() {
+  local title="$1"
+  local message="$2"
+  local urgency="${3:-normal}"
+
+  # Log the notification
+  log_message "${urgency^^}" "$title: $message"
+
+  # Display notification
+  notify-send -u "$urgency" "$title" "$message"
+}
+
+# Check if transmission-daemon is running
+is_transmission_running() {
+  systemctl is-active --quiet "$DAEMON_NAME"
+  return $?
+}
+
+# Check if stig is installed and available
+check_stig_installation() {
+  if ! command -v "$STIG_CMD" >/dev/null 2>&1; then
+    show_notification "Stig Error" "Stig command not found in PATH" "critical"
+    log_message "ERROR" "Stig not found in PATH"
+    return 1
+  fi
+  return 0
+}
+
+# Start transmission-daemon with improved error handling
+start_transmission() {
+  # Prompt for start confirmation
+  choice=$(echo -e "yes\nno" | tofi --prompt="Transmission is not running. Start it?")
+  if [ "$choice" != "yes" ]; then
+    show_notification "Transmission" "Service start canceled" "low"
+    return 1
+  fi
+
+  # Attempt to start the service
+  if sudo systemctl start "$DAEMON_NAME"; then
+    # Wait for service to start
+    for _ in {1..5}; do
+      if is_transmission_running; then
+        show_notification "Transmission" "Daemon started successfully" "normal"
+        log_message "INFO" "Transmission daemon started"
+        return 0
+      fi
+      sleep 1
+    done
+
+    # If we get here, service failed to start
+    show_notification "Transmission Error" "Failed to start daemon" "critical"
+    log_message "ERROR" "Failed to start Transmission daemon"
+    return 1
+  else
+    show_notification "Transmission Error" "Service start failed" "critical"
+    log_message "ERROR" "Transmission service start command failed"
+    return 1
+  fi
+}
+
+# Launch Stig with improved path detection
+launch_stig() {
+  # Detect Stig executable
+  local stig_paths=(
+    "$(command -v "$STIG_CMD")"
+    "/usr/bin/stig"
+    "/usr/local/bin/stig"
+    "$HOME/.local/bin/stig"
+    "$HOME/.local/bin/stig/stig"
+    "$HOME/.local/bin/stig.py"
+  )
+
+  local stig_path=""
+  for path in "${stig_paths[@]}"; do
+    if [ -x "$path" ]; then
+      stig_path="$path"
+      break
+    fi
+  done
+
+  # Launch Stig
+  if [ -n "$stig_path" ]; then
+    if $TERMINAL -e "$stig_path"; then
+      show_notification "Stig" "Launched Stig client" "normal"
+      log_message "INFO" "Stig launched from $stig_path"
+      return 0
+    else
+      show_notification "Stig Error" "Failed to launch terminal for Stig" "critical"
+      log_message "ERROR" "Failed to launch Stig in terminal"
+      return 1
+    fi
+  else
+    show_notification "Stig Error" "Stig executable not found" "critical"
+    log_message "ERROR" "No valid Stig executable found"
+    return 1
+  fi
+}
+
+# Main function with comprehensive error handling
+main() {
+  # Ensure log file is writable
+  touch "$HOME/.transmission-stig-launcher.log" 2>/dev/null
+
+  # Check Stig installation
+  if ! check_stig_installation; then
+    show_notification "Setup Error" "Please install Stig (pip install stig)" "critical"
+    exit 1
+  fi
+
+  # Check and start Transmission if needed
+  if ! is_transmission_running; then
+    if ! start_transmission; then
+      show_notification "Transmission Error" "Cannot proceed without Transmission" "critical"
+      exit 1
+    fi
+  else
+    show_notification "Transmission" "Daemon is already running" "low"
+  fi
+
+  # Launch Stig
+  if ! launch_stig; then
+    show_notification "Launch Error" "Failed to launch Stig" "critical"
+    exit 1
+  fi
+}
+
+# Run the script
+main
