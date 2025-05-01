@@ -1,0 +1,120 @@
+* {
+    border: none;
+    font-family: "/usr/share/fonts/TTF/JetBrainsMono-Medium.ttf", "OverpassMono", "Font Awesome 6 Free";
+    font-size: 13px;
+    min-height: 0;
+}
+
+window#waybar {
+    background-color: #1e1e2e;  /* Dark base color for the bar */
+    color: #cdd6f4;             /* Light text color for contrast */
+    transition-property: background-color;
+    transition-duration: 0.5s;
+}
+
+#workspaces button {
+    padding: 0 8px;
+    color: #cdd6f4;             /* Light text color */
+    background-color: #313244;  /* Darker gray for workspaces */
+    margin: 4px 2px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+#workspaces button:hover {
+    background-color: #45475a;  /* Lighter gray for hover */
+    color: #b4befe;             /* Lavender text for hover */
+}
+
+#workspaces button.active {
+    background-color: #89b4fa;  /* Bright blue for active workspace */
+    color: #1e1e2e;             /* Dark text for contrast */
+}
+
+#workspaces button.urgent {
+    background-color: #f38ba8;  /* Red for urgent workspace */
+    color: #1e1e2e;             /* Dark text for contrast */
+}
+
+#clock,
+#battery,
+#cpu,
+#memory,
+#temperature,
+#backlight,
+#network,
+#pulseaudio,
+#custom-rss,
+#custom-torrent,
+#custom-net,
+#mpd {
+    padding: 4px 12px 0 12px;
+    margin: 4px 2px;
+    background-color: #313244;  /* Darker gray for modules */
+    color: #cdd6f4;             /* Light text color */
+    border-radius: 8px;
+}
+
+#clock {
+    background-color: #cba6f7;  /* Mauve for clock */
+    color: #1e1e2e;             /* Dark text for contrast */
+}
+
+#battery {
+    color: #a6e3a1;             /* Green for battery */
+}
+
+#battery.warning {
+    color: #f9e2af;             /* Yellow for warning */
+}
+
+#battery.critical {
+    color: #f38ba8;             /* Red for critical */
+}
+
+#network {
+    color: #89b4fa;             /* Blue for network */
+}
+
+#network.disconnected {
+    color: #f38ba8;             /* Red for disconnected */
+}
+
+#pulseaudio {
+    color: #b4befe;             /* Lavender for audio */
+}
+
+#pulseaudio.muted {
+    color: #6c7086;             /* Gray for muted audio */
+}
+
+#cpu {
+    color: #94e2d5;             /* Teal for CPU */
+}
+
+#memory {
+    color: #74c7ec;             /* Sapphire for memory */
+}
+
+#temperature {
+    color: #fab387;             /* Peach for temperature */
+}
+
+#temperature.critical {
+    color: #f38ba8;             /* Red for critical temperature */
+}
+
+#custom-rss {
+    color: #f9e2af;             /* Yellow for RSS */
+}
+
+
+#custom-torrent {
+  font-size: 14px;
+  font-weight: bold;
+}
+
+#mpd {
+    color: #f5c2e7;             /* Pink for MPD */
+}
+
