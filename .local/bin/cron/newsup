@@ -1,0 +1,33 @@
+#!/bin/sh
+
+# Set as a cron job to check for new RSS entries for newsboat.
+# If newsboat is open, sends it an "R" key to refresh (Wayland version).
+
+/usr/bin/notify-send " Updating RSS feeds..."
+
+# Check if Newsboat is running
+if pgrep -f newsboat$ >/dev/null; then
+  # Use Hyprland IPC to focus Newsboat's window and send the "R" key
+  WIN_ADDRESS=$(hyprctl clients -j | jq -r '.[] | select(.class=="newsboat") | .address')
+  if [ -n "$WIN_ADDRESS" ]; then
+    hyprctl dispatch focuswindow "address:$WIN_ADDRESS" # Focus Newsboat window
+    wtype -P R -p R                                     # Send "R" key (Wayland tool)
+    exit 0
+  else
+    echo "Newsboat window not found!" >&2
+  fi
+fi
+
+# Fallback: Update feeds directly if Newsboat isn't running
+echo  >/tmp/newsupdate
+pkill -RTMIN+6 "${STATUSBAR:-dwmblocks}"
+
+# Timeout to prevent hanging
+if ! timeout 1000s /usr/bin/newsboat -x reload; then
+  /usr/bin/notify-send "❌ RSS update timed out!"
+  exit 1
+fi
+
+rm -f /tmp/newsupdate
+pkill -RTMIN+6 "${STATUSBAR:-dwmblocks}"
+/usr/bin/notify-send " RSS feed update complete."
