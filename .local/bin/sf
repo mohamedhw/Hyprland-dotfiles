@@ -1,0 +1,36 @@
+#!/bin/sh
+
+# Run fzf to select multiple files with preview using bat
+selected_files=$(fzf -m --preview="bat --color=always --style=plain --line-range=:40 {}")
+
+# Check if any files were selected
+if [ -n "$selected_files" ]; then
+  # Iterate over each selected file
+  echo "$selected_files" | while IFS= read -r selected_file; do
+    # Get the file extension
+    extension="${selected_file##*.}"
+
+    case "$extension" in
+    txt | md | log | ini | conf | json | yaml | toml | csv | xml | html | css | js | jsx | ts | tsx | py | sh | bash | zsh | php | cpp | h | c | java | go | rust | lua | swift | r)
+      nvim "$selected_file"
+      ;;
+    mp4 | mkv | webm | avi | mov | flv | wmv | mpg | mpeg | 3gp | mp3)
+      mpv "$selected_file"
+      ;;
+    jpg | jpeg | png | gif | bmp | tiff | webp | svg | ico | heif)
+      nsxiv "$selected_file"
+      ;;
+    pdf)
+      zathura "$selected_file"
+      ;;
+    zip | tar | gz | bz2 | xz | rar | 7z)
+      xdg-open "$selected_file"
+      ;;
+    *)
+      nvim "$selected_file"
+      ;;
+    esac
+  done
+else
+  printf "No file selected.\n"
+fi

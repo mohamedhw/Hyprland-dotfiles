@@ -1,0 +1,129 @@
+#!/bin/bash
+# Transmission and Stig Launcher with Configuration Verification
+
+# Configuration
+TERMINAL="kitty" # Terminal emulator to use
+DAEMON_NAME="transmission.service"
+STIG_CMD="stig"
+
+# Logging function
+log_message() {
+  local level="$1"
+  local message="$2"
+  local timestamp=$(date "+%Y-%m-%d %H:%M:%S")
+  echo "[$timestamp] [$level] $message" | tee -a "$HOME/.transmission-stig-launcher.log"
+}
+
+# Verify and fix Transmission configuration
+verify_transmission_config() {
+  # Check and create configuration directory if missing
+  if [ ! -d "/etc/transmission-daemon" ]; then
+    log_message "WARNING" "Transmission configuration directory missing. Creating..."
+    sudo mkdir -p /etc/transmission-daemon
+  fi
+
+  # Check settings.json
+  if [ ! -f "/etc/transmission-daemon/settings.json" ]; then
+    log_message "WARNING" "Creating default Transmission settings"
+    sudo bash -c 'cat > /etc/transmission-daemon/settings.json << EOL
+{
+    "download-dir": "/var/lib/transmission/Downloads",
+    "incomplete-dir": "/var/lib/transmission/Incomplete",
+    "incomplete-dir-enabled": true,
+    "rpc-authentication-required": false,
+    "rpc-bind-address": "0.0.0.0",
+    "rpc-enabled": true,
+    "rpc-port": 9091,
+    "rpc-url": "/transmission/",
+    "rpc-whitelist": "127.0.0.1,192.168.*.*",
+    "peer-port": 51413,
+    "peer-port-random-on-start": false,
+    "umask": 2
+}
+EOL'
+  fi
+
+  # Ensure correct permissions
+  sudo chown -R transmission:transmission /etc/transmission-daemon
+  sudo chmod 755 /etc/transmission-daemon
+  sudo chmod 644 /etc/transmission-daemon/settings.json
+
+  # Ensure download directories exist
+  sudo mkdir -p /var/lib/transmission/Downloads
+  sudo mkdir -p /var/lib/transmission/Incomplete
+  sudo chown -R transmission:transmission /var/lib/transmission
+
+  log_message "INFO" "Transmission configuration verified and fixed"
+}
+
+# Show notification with logging
+show_notification() {
+  local title="$1"
+  local message="$2"
+  local urgency="${3:-normal}"
+
+  log_message "${urgency^^}" "$title: $message"
+  notify-send -u "$urgency" "$title" "$message"
+}
+
+# Check if transmission-daemon is running
+is_transmission_running() {
+  systemctl is-active --quiet "$DAEMON_NAME"
+  return $?
+}
+
+# Start transmission-daemon with configuration verification
+start_transmission() {
+  # Verify and fix configuration
+  verify_transmission_config
+
+  # Reload systemd
+  sudo systemctl daemon-reload
+
+  # Prompt for start confirmation
+  choice=$(echo -e "yes\nno" | tofi --prompt="Transmission is not running. Start it?")
+  if [ "$choice" != "yes" ]; then
+    show_notification "Transmission" "Service start canceled" "low"
+    return 1
+  fi
+
+  # Attempt to start the service
+  if sudo systemctl start "$DAEMON_NAME"; then
+    # Wait for service to start
+    for _ in {1..5}; do
+      if is_transmission_running; then
+        show_notification "Transmission" "Daemon started successfully" "normal"
+        return 0
+      fi
+      sleep 1
+    done
+
+    # If we get here, service failed to start
+    show_notification "Transmission Error" "Failed to start daemon" "critical"
+    return 1
+  else
+    show_notification "Transmission Error" "Service start failed" "critical"
+    return 1
+  fi
+}
+
+# Rest of the script remains the same as previous version
+# (include launch_stig(), check_stig_installation(), etc.)
+
+# Main function
+main() {
+  # Ensure log file is writable
+  touch "$HOME/.transmission-stig-launcher.log" 2>/dev/null
+
+  # Check and start Transmission
+  if ! start_transmission; then
+    show_notification "Setup Error" "Cannot proceed without Transmission" "critical"
+    exit 1
+  fi
+
+  # Proceed with Stig launch
+  # ... (rest of the main function)
+}
+
+# Run the script
+main

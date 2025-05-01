@@ -1,0 +1,22 @@
+#!/bin/sh
+
+# Use xbacklight to adjust laptop screen brightness and send a notification
+
+send_notification() {
+	brightness=$(cat /sys/class/backlight/*/brightness)
+	max_brightness=$(cat /sys/class/backlight/*/max_brightness)
+	percentage=$((brightness * 100 / max_brightness))
+	# dunstify -a "Brightness" "Currently at $percentage%" -u low
+	dunstify -a "Backlight" -u low -r 9994 -h int:value:"$brightness" -i "brightness" "Brightness" "Currently at $percentage%"
+}
+
+case $1 in
+up)
+	xbacklight -inc 5
+	send_notification "$1"
+	;;
+down)
+	xbacklight -dec 5
+	send_notification "$1"
+	;;
+esac

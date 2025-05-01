@@ -1,0 +1,8 @@
+#!/bin/sh
+
+# Check the current status of MPC
+if mpc status | grep -q '\[playing\]'; then
+  mpc pause
+elif mpc status | grep -q '\[paused\]'; then
+  mpc play
+fi
