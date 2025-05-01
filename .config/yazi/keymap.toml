@@ -1,0 +1,39 @@
+# A TOML linter such as https://taplo.tamasfe.dev/ can use this schema to validate your config.
+# If you encounter any issues, please make an issue at https://github.com/yazi-rs/schemas.
+"$schema" = "https://yazi-rs.github.io/schemas/keymap.json"
+
+[manager]
+prepend_keymap = [
+	{ on = [ "j" ], run = [ "plugin arrow 1"],  desc = "Move selection downwards, or wrap." },
+	{ on = [ "k" ], run = [ "plugin arrow -1"], desc = "Move selection upwards, or wrap." },
+	{ on = [ "l" ], run = [ "plugin smart-enter", "escape --visual --select" ], desc = "Enter the child directory, or open file." },
+	{ on = [ "L" ], run = "plugin smart-enter 'detatch'", desc = "Open in new window." },
+	{ on = [ "<Right>" ], run = [ "plugin smart-enter"], desc = "Enter the child directory, or open file." },
+  # { on = [ "T" ], run = "plugin max-preview", desc = "Maximize preview pane"},
+  { on = [ "d" ], run = [ "yank --cut" ], desc = "cut"},
+  { on = [ "E" ], run = [ "plugin ya pub extract --list '$@'" ], desc = "ex"},
+  { on = [ "n" ], run = "create", desc = "Create a file or directory (ends with / for directories)" },
+  { on = [ "t" ], run = '''shell 'nsxiv -t "$(pwd)"'  --confirm''', desc = "nsxiv in thumb mode"},
+  	{ on = [ "E" ], run = 'ya pub extract --list "$@"', desc = "Extract here", for = "unix" },
+
+  # { on = [ "E" ], run = '''shell '~/.local/bin/extract "$1"' --confirm''', desc = "Diagnose archive" },
+	# { on = [ "E" ], run = [ "plugin extract"], desc = "extract" },
+  # { on = [ "E" ], run = '''shell '$TERMINAL -e $SHELL -c -i extract "$1"' --confirm''', desc = "nsxiv in thumb mode"},
+
+
+
+  # { on = [ "E" ], run = '''shell 'extract "$1"'  --confirm''', desc = "extract archives"},
+  # { on = [ "w" ], run = '''
+  #     shell setsid -f $TERMINAL >~/terminal_debug.log 2>&1
+  # ''', desc = "open terminal in pwd"},
+  { on = [ "<C-n>"], run = '''
+      shell 'dragon -x -i -T "$1"' --confirm
+  ''', desc = "Open file with dragon"},
+  { on = [ "=" ], run = """
+      shell 'printf "Mode Bits: "; read ans; chmod $ans "$@"' --block --confirm
+  """, desc = "chmod" },
+  { on = [ "<A-Enter>" ], run = """
+      shell '$TERMINAL -e $SHELL -c -i \"cd $PWD && ya && exec $SHELL\"' --orphan --confirm
+  """, desc = "Spawn new yazi window in CWD" },
+]
+
