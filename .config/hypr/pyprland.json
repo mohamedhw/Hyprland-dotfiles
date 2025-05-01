@@ -1,0 +1,34 @@
+{
+  "pyprland": {
+    "plugins": [
+      "scratchpads",
+      "magnify"
+    ]
+  },
+  "scratchpads": {
+    "term": {
+      "command": "alacritty --class scratchpad",
+      "margin": 50,
+      "unfocused": "hide",
+      "animation": "fromLeft"
+    },
+    "music": {
+      "command": "alacritty --class scratchpad -e ncmpcpp",
+      "margin": 50,
+      "unfocused": "hide",
+      "animation": "fromTop"
+    },
+    "htop": {
+      "command": "alacritty --class scratchpad -e htop",
+      "margin": 50,
+      "unfocused": "hide",
+      "animation": "fromBottom"
+    },
+    "ai": {
+      "command": "alacritty --class scratchpad -e ai-term",
+      "margin": 50,
+      "unfocused": "hide",
+      "animation": "fromBottom"
+    }
+  }
+}
