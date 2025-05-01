@@ -1,0 +1,152 @@
+#!/bin/bash
+
+# Hyprland Tofi Mount Script
+# Dependencies: tofi, udisks2, zenity (for GUI password), notify-send (for notifications)
+
+# Check for required dependencies
+check_dependencies() {
+  for cmd in tofi lsblk grep awk notify-send; do
+    if ! command -v $cmd &>/dev/null; then
+      echo "Error: $cmd is not installed. Please install it first."
+      exit 1
+    fi
+  done
+}
+
+# Configuration for tofi
+TOFI_OPTS="--prompt-text"
+
+# Show notification
+show_notification() {
+  local title=$1
+  local message=$2
+  local urgency=${3:-normal} # default to normal urgency
+
+  notify-send -u "$urgency" "$title" "$message"
+}
+
+# Get list of available devices that aren't already mounted
+get_available_devices() {
+  lsblk -lp | grep "part $" | awk '{print $1 " (" $4 ")"}'
+}
+
+# Get list of possible mount points
+get_mount_points() {
+  # List standard mount points and check if they exist
+  echo "/mnt"
+  echo "/media"
+
+  # Add subdirectories of /mnt if they exist
+  if [ -d "/mnt" ]; then
+    find /mnt -type d -maxdepth 1 2>/dev/null | grep -v "^/mnt$"
+  fi
+
+  # Add custom mount point option
+  echo "Custom location"
+}
+
+# Prompt using tofi
+tofi_prompt() {
+  local prompt=$1
+  local options=$2
+
+  echo -e "$options" | tofi $TOFI_OPTS "$prompt"
+}
+
+# Get text input with tofi
+tofi_input() {
+  local prompt=$1
+  tofi $TOFI_OPTS "$prompt" --input-as-password
+}
+
+# Mount the device
+mount_device() {
+  local device=$1
+  local mount_point=$2
+
+  # If custom location was selected
+  if [ "$mount_point" == "Custom location" ]; then
+    mount_point=$(tofi $TOFI_OPTS "Enter custom mount path:")
+    if [ -z "$mount_point" ]; then
+      show_notification "Mount Canceled" "No mount point specified" "normal"
+      exit 1
+    fi
+
+    # Create directory if it doesn't exist
+    if [ ! -d "$mount_point" ]; then
+      mkdir -p "$mount_point"
+    fi
+  fi
+
+  # Determine method for password entry
+  if command -v zenity &>/dev/null; then
+    # Use zenity for GUI password prompt
+    password=$(zenity --password --title="Mount $device" 2>/dev/null)
+    exit_code=$?
+    if [ $exit_code -ne 0 ]; then
+      exit 1
+    fi
+  else
+    # Use tofi for password entry with hidden input
+    password=$(tofi $TOFI_OPTS "Enter sudo password:" --input-as-password)
+  fi
+
+  # Attempt to mount
+  if [ -n "$password" ]; then
+    echo "$password" | sudo -S mount "$device" "$mount_point" 2>/dev/null
+    mount_status=$?
+
+    if [ $mount_status -eq 0 ]; then
+      show_notification "Device Mounted" "$device mounted at $mount_point" "normal"
+    else
+      # Try with udisks2 if available
+      if command -v udisksctl &>/dev/null; then
+        udisksctl mount -b "$device" --mount-options="nosuid,nodev" 2>/dev/null
+        mount_status=$?
+
+        if [ $mount_status -eq 0 ]; then
+          show_notification "Device Mounted" "$device mounted using udisks2" "normal"
+        else
+          show_notification "Mount Failed" "Could not mount $device. Check permissions." "critical"
+        fi
+      else
+        show_notification "Mount Failed" "Could not mount $device. Check permissions." "critical"
+      fi
+    fi
+  else
+    show_notification "Mount Canceled" "No password entered" "normal"
+  fi
+}
+
+# Main function
+main() {
+  check_dependencies
+
+  # Step 1: Display available devices with tofi
+  devices=$(get_available_devices)
+  if [ -z "$devices" ]; then
+    show_notification "No Devices" "No unmounted devices available" "normal"
+    exit 1
+  fi
+
+  selected_device=$(tofi_prompt "Select device to mount:" "$devices")
+  if [ -z "$selected_device" ]; then
+    exit 0
+  fi
+
+  # Extract just the device path from selection
+  device=$(echo "$selected_device" | awk '{print $1}')
+
+  # Step 3: Show possible mount points
+  mount_points=$(get_mount_points)
+  selected_mount=$(tofi_prompt "Select mount location:" "$mount_points")
+  if [ -z "$selected_mount" ]; then
+    exit 0
+  fi
+
+  # Step 5: Mount the device with password
+  mount_device "$device" "$selected_mount"
+}
+
+# Run the script
+main

@@ -1,0 +1,127 @@
+#!/bin/bash
+
+# Hyprland Tofi Unmount Script
+# Dependencies: tofi, udisks2, zenity (for GUI password), notify-send (for notifications)
+
+# Check for required dependencies
+check_dependencies() {
+  for cmd in tofi grep awk notify-send; do
+    if ! command -v $cmd &>/dev/null; then
+      echo "Error: $cmd is not installed. Please install it first."
+      exit 1
+    fi
+  done
+}
+
+# Configuration for tofi
+TOFI_OPTS="--prompt-text"
+
+# Show notification
+show_notification() {
+  local title=$1
+  local message=$2
+  local urgency=${3:-normal} # default to normal urgency
+
+  notify-send -u "$urgency" "$title" "$message"
+}
+
+# Get list of mounted devices that can be unmounted (in reversed order)
+get_mounted_devices() {
+  # Get a list of mounted devices with their mount points (excluding system mounts)
+  mount | grep -E '^/dev/' | grep -v -E '( on /(boot|dev|proc|sys|run|etc|usr|var) | on / )' | awk '{print $1 " on " $3}' | tac
+}
+
+# Prompt using tofi
+tofi_prompt() {
+  local prompt=$1
+  local options=$2
+
+  echo -e "$options" | tofi $TOFI_OPTS "$prompt"
+}
+
+# Get password using zenity
+get_password_zenity() {
+  local device=$1
+  zenity --password --title="Unmount $device" 2>/dev/null
+}
+
+# Get password using tofi
+get_password_tofi() {
+  tofi --input-as-password $TOFI_OPTS "Enter sudo password:"
+}
+
+# Unmount the selected device
+unmount_device() {
+  local device=$1
+  local mount_point=$2
+  local password=""
+
+  # Try first with udisks2 which doesn't require password typically
+  if command -v udisksctl &>/dev/null; then
+    udisksctl unmount -b "$device" 2>/dev/null
+    unmount_status=$?
+
+    if [ $unmount_status -eq 0 ]; then
+      show_notification "Device Unmounted" "$device unmounted successfully" "normal"
+      return 0
+    fi
+  fi
+
+  # If udisks2 fails or is not available, try with sudo
+  # First check if zenity is available
+  if command -v zenity &>/dev/null; then
+    # Use zenity for GUI password prompt
+    password=$(get_password_zenity "$device")
+    exit_code=$?
+
+    if [ $exit_code -ne 0 ]; then
+      show_notification "Unmount Canceled" "Operation canceled" "normal"
+      exit 1
+    fi
+  else
+    # Use tofi if zenity is not available
+    password=$(get_password_tofi)
+  fi
+
+  # Attempt to unmount with sudo if we have a password
+  if [ -n "$password" ]; then
+    echo "$password" | sudo -S umount "$mount_point" 2>/dev/null
+    unmount_status=$?
+
+    if [ $unmount_status -eq 0 ]; then
+      show_notification "Device Unmounted" "$device unmounted successfully" "normal"
+    else
+      show_notification "Unmount Failed" "Could not unmount $device from $mount_point" "critical"
+    fi
+  else
+    show_notification "Unmount Canceled" "No password entered" "normal"
+  fi
+}
+
+# Main function
+main() {
+  check_dependencies
+
+  # Get list of mounted devices
+  devices=$(get_mounted_devices)
+  if [ -z "$devices" ]; then
+    show_notification "No Devices" "No mountable devices currently mounted" "normal"
+    exit 1
+  fi
+
+  # Select a device to unmount
+  selected_device=$(tofi_prompt "Select device to unmount:" "$devices")
+  if [ -z "$selected_device" ]; then
+    exit 0
+  fi
+
+  # Extract device path and mount point
+  device=$(echo "$selected_device" | awk '{print $1}')
+  mount_point=$(echo "$selected_device" | sed 's/^[^ ]* on //')
+
+  # Unmount the device
+  unmount_device "$device" "$mount_point"
+}
+
+# Run the script
+main
