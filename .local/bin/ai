@@ -1,0 +1,127 @@
+#!/bin/bash
+# Hyprland Tofi Ollama Manager Script
+# Dependencies: tofi, systemctl, ollama, notify-send (for notifications)
+
+# Check for required dependencies
+check_dependencies() {
+  for cmd in tofi systemctl ollama notify-send; do
+    if ! command -v $cmd &>/dev/null; then
+      notify-send -u critical "Error" "$cmd is not installed. Please install it first."
+      exit 1
+    fi
+  done
+}
+
+# Configuration for tofi
+TOFI_OPTS="--prompt-text"
+
+# Show notification
+show_notification() {
+  local title=$1
+  local message=$2
+  local urgency=${3:-normal} # default to normal urgency
+  notify-send -u "$urgency" "$title" "$message"
+}
+
+# Check if ollama service is running
+check_ollama_service() {
+  systemctl is-active --quiet ollama.service
+  return $?
+}
+
+# Start ollama service
+start_ollama_service() {
+  # Determine method for password entry
+  if command -v zenity &>/dev/null; then
+    # Use zenity for GUI password prompt
+    password=$(zenity --password --title="Start Ollama Service" 2>/dev/null)
+    exit_code=$?
+    if [ $exit_code -ne 0 ]; then
+      exit 1
+    fi
+  else
+    # Use tofi for password entry with hidden input
+    password=$(tofi $TOFI_OPTS "Enter sudo password:" --input-as-password)
+  fi
+
+  if [ -n "$password" ]; then
+    echo "$password" | sudo -S systemctl start ollama.service 2>/dev/null
+    service_status=$?
+    if [ $service_status -eq 0 ]; then
+      show_notification "Ollama Service" "Successfully started ollama.service" "normal"
+      return 0
+    else
+      show_notification "Ollama Service Failed" "Could not start ollama.service" "critical"
+      return 1
+    fi
+  else
+    show_notification "Operation Canceled" "No password entered" "normal"
+    return 1
+  fi
+}
+
+# Get list of available Ollama models
+get_ollama_models() {
+  # Skip header with tail and get just the model names
+  ollama list | tail -n +2 | awk '{print $1}'
+}
+
+# Run the selected Ollama model
+run_ollama_model() {
+  local model=$1
+  show_notification "Starting Ollama" "Running model: $model" "normal"
+  # Run the model in a terminal - adjust the terminal command as needed for Hyprland
+  if command -v kitty &>/dev/null; then
+    kitty -e ollama run "$model"
+  elif command -v alacritty &>/dev/null; then
+    alacritty -e ollama run "$model"
+  elif command -v foot &>/dev/null; then
+    foot -e ollama run "$model"
+  else
+    # If none of the above terminals are found, try to find a terminal
+    for term in foot alacritty kitty gnome-terminal konsole xterm; do
+      if command -v $term &>/dev/null; then
+        $term -e ollama run "$model"
+        return 0
+      fi
+    done
+    # If no terminal is found, show error notification
+    show_notification "Error" "No terminal found to run ollama" "critical"
+    return 1
+  fi
+}
+
+# Main function
+main() {
+  check_dependencies
+
+  # Check if ollama service is running
+  if ! check_ollama_service; then
+    show_notification "Ollama Service" "ollama.service is not running. Starting..." "normal"
+    if ! start_ollama_service; then
+      exit 1
+    fi
+
+    # Wait a moment for the service to fully start
+    sleep 2
+  fi
+
+  # Get available models
+  models=$(get_ollama_models)
+  if [ -z "$models" ]; then
+    show_notification "No Models" "No Ollama models available" "normal"
+    exit 1
+  fi
+
+  # Display models with tofi
+  selected_model=$(echo -e "$models" | tofi $TOFI_OPTS "Select Ollama model to run:")
+  if [ -z "$selected_model" ]; then
+    exit 0
+  fi
+
+  # Run the selected model
+  run_ollama_model "$selected_model"
+}
+
+# Run the script
+main

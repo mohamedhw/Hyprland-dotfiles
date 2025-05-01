@@ -1,0 +1,60 @@
+#!/bin/bash
+# Simple Terminal-based Ollama Manager Script
+
+# Check if ollama service is running
+if ! systemctl is-active --quiet ollama.service; then
+  echo "Ollama service is not running. Starting..."
+
+  # Use sudo directly - it will prompt for password if needed
+  sudo systemctl start ollama.service
+
+  if [ $? -ne 0 ]; then
+    echo "Failed to start ollama.service"
+    exit 1
+  fi
+
+  echo "Successfully started ollama.service"
+  # Wait for service to fully start
+  sleep 2
+else
+  echo "Ollama service is already running."
+fi
+
+# Get available models
+models=($(ollama list | tail -n +2 | awk '{print $1}'))
+
+if [ ${#models[@]} -eq 0 ]; then
+  echo "No Ollama models available"
+  exit 1
+fi
+
+# Display model list
+echo "Available Ollama Models:"
+echo "------------------------"
+for i in "${!models[@]}"; do
+  echo "  $((i + 1)). ${models[$i]}"
+done
+echo "------------------------"
+
+# Get user selection
+echo -n "Enter the number of the model to run (or q to quit): "
+read choice
+
+if [[ $choice == "q" || $choice == "Q" ]]; then
+  exit 0
+fi
+
+# Validate input
+if [[ $choice =~ ^[0-9]+$ ]] && [ $choice -ge 1 ] && [ $choice -le ${#models[@]} ]; then
+  selected_model="${models[$((choice - 1))]}"
+
+  echo "Starting Ollama model: $selected_model"
+  echo "Press Ctrl+C to exit the model"
+  echo "--------------------------------"
+
+  # Run the model
+  exec ollama run "$selected_model"
+else
+  echo "Invalid selection."
+  exit 1
+fi
