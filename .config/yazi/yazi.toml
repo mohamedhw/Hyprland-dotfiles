@@ -32,10 +32,10 @@ open = [
   { run = 'opener "$@"', orphan = true, desc = "Open" },
 ]
 play = [
-	{ run = 'mpv "$@"', orphan = true, for = "unix" },
+  { run = 'mpv --no-terminal "$@" &', orphan = true, for = "unix" },
 ]
 edit = [
-	{ run = 'nvim "$@"', orphan = true, for = "unix" },
+	{ run = 'nvim "$@"', block = true, for = "unix" },
 ]
 music = [
 	{ run = 'ncmpcpp "$@"', orphan = true, for = "unix" },
@@ -47,7 +47,7 @@ document = [
 	{ run = 'libreoffice "$@"', orphan = true, for = "unix" },
 ]
 view = [
-	{ run = 'nsxiv "$@" &', orphan = true, for = "unix" },
+  	{ run = '''nsxiv -n "$(ls -1 "$(dirname "$@")" | grep -nFx "$(basename "$@")" | cut -d: -f1)" "$(dirname "$@")"/*''', orphan = true, for = "unix" },
 ]
 archiveZip = [
 	{ run = 'unzip "$@" &', orphan = true, for = "unix" },
@@ -62,6 +62,8 @@ archiveRar = [
 [open]
 rules = [
   # -- Scripts and Code Files
+  { name = "*.txt", use = [ "edit" ] },
+  { name = "*.csv", use = [ "edit" ] },
   { name = "*.py", use = [ "edit" ] },
   { name = "*.js", use = [ "edit" ] },
   { name = "*.ts", use = [ "edit" ] },
@@ -120,8 +122,6 @@ rules = [
   { name = "*.pptx", use = [ "document" ] },
   { name = "*.odt", use = [ "document" ] },
   { name = "*.ods", use = [ "document" ] },
-  { name = "*.txt", use = [ "document" ] },
-  { name = "*.csv", use = [ "document" ] },
   { name = "*.rtf", use = [ "document" ] },
   { name = "*.epub", use = [ "document" ] },
   { name = "*.mobi", use = [ "document" ] },
