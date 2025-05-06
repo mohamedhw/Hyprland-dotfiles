@@ -47,7 +47,7 @@ document = [
 	{ run = 'libreoffice "$@"', orphan = true, for = "unix" },
 ]
 view = [
-  	{ run = '''nsxiv -n "$(ls -1 "$(dirname "$@")" | grep -nFx "$(basename "$@")" | cut -d: -f1)" "$(dirname "$@")"/*''', orphan = true, for = "unix" },
+  { run = '''nsxiv -a "$1" "$(dirname "$1")"/*''', orphan = true, for = "unix" },
 ]
 archiveZip = [
 	{ run = 'unzip "$@" &', orphan = true, for = "unix" },
