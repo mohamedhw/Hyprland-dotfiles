@@ -1,110 +1,95 @@
-#!/bin/sh
+#!/bin/bash
 
-# Device configuration
-DEVICE_MAC="F4:B6:2D:E2:BF:41"
+ID="F4:B6:2D:E2:BF:41"
 
-# Function to get Bluetooth power state
-get_powered() {
-  bluetoothctl show 2>/dev/null | grep -i "Powered" | awk '{print $2}'
+# Check if systemctl is available
+if ! command -v systemctl &>/dev/null; then
+  notify-send "Bluetooth Control Error" "systemctl not found. This script requires a system with systemd."
+  exit 1
+fi
+
+# Check if tofi is available
+if ! command -v tofi &>/dev/null; then
+  notify-send "Bluetooth Control Error" "tofi not found. Please install tofi to use this script."
+  exit 1
+fi
+
+# Check if zenity is available
+if ! command -v zenity &>/dev/null; then
+  notify-send "Bluetooth Control Error" "zenity not found. Please install zenity to use this script."
+  exit 1
+fi
+
+# Check if notify-send is available
+if ! command -v notify-send &>/dev/null; then
+  echo "notify-send not found. Please install libnotify-bin to use this script."
+  exit 1
+fi
+i=0
+# Function to connect to R50 device
+connect_R50() {
+  local device_id="$1"
+  notify-send "Bluetooth Control" "Connecting to R50 ($device_id)..."
+  if bluetoothctl connect "$device_id" &>/dev/null; then
+    notify-send "Bluetooth Control" "Successfully connected to R50."
+  else
+    if [ "$i" -eq 0 ]; then
+      ((i++))
+      bluetoothctl remove "$device_id"
+      sleep 1
+      bluetoothctl scan
+      sleep 2
+      connect_R50 "$device_id"
+    else
+      notify-send "Bluetooth Control Error" "Failed to connect to R50. Ensure the device is available and paired."
+      return 1
+    fi
+  fi
 }
 
-# Check if tofi is installed
-if ! command -v tofi &>/dev/null; then
-  notify-send "Bluetooth Error" "tofi is required but not installed!" -u critical
-  exit 1
-fi
+# Function to get sudo password using zenity
+get_sudo_password() {
+  password=$(zenity --password --title="Sudo Password" --text="Enter your sudo password:")
+  echo "$password"
+}
 
-# Unblock Bluetooth if soft-blocked
-if rfkill list bluetooth | grep -q "Soft blocked: yes"; then
-  rfkill unblock bluetooth >/dev/null 2>&1
-  sleep 2
-fi
-
-# Get current Bluetooth state
-current_state=$(get_powered)
-
-# Create interactive prompt
-if [[ "$current_state" == "yes" ]]; then
-  prompt="Bluetooth is active. Turn it OFF?"
-else
-  prompt="Bluetooth is inactive. Turn it ON?"
-fi
-
-# Tofi dialog
-choice=$(echo -e "yes\nno" | tofi --prompt "$prompt")
-
-# Handle choice with device management
-case "$choice" in
-"yes")
-  if [[ "$current_state" == "yes" ]]; then
-    bluetoothctl power off >/dev/null 2>&1
-    notify-send "Bluetooth Status" "Bluetooth turned off" -u normal
-  else
-    max_retries=3
-    for ((i = 1; i <= max_retries; i++)); do
-      bluetoothctl power on >/dev/null 2>&1
-      sleep 1
-      new_state=$(get_powered)
-      if [[ "$new_state" == "yes" ]]; then
-        # Remove existing device connection and pairing
-        bluetoothctl disconnect "$DEVICE_MAC" >/dev/null 2>&1
-        bluetoothctl remove "$DEVICE_MAC" >/dev/null 2>&1
-
-        # Setup agent for pairing
-        bluetoothctl agent on >/dev/null 2>&1
-        bluetoothctl default-agent >/dev/null 2>&1
-
-        notify-send "Bluetooth Status" "Searching for device..." -u low
-
-        # Start scanning with longer duration
-        bluetoothctl scan on >/dev/null 2>&1 &
-        SCAN_PID=$!
-        sleep 10  # Increased scan time to 10 seconds
-
-        # Stop scanning and check if device was found
-        kill -INT $SCAN_PID >/dev/null 2>&1
-        if ! bluetoothctl devices | grep -q "$DEVICE_MAC"; then
-          notify-send "Bluetooth Warning" "Device not found after scan. Ensure it's in pairing mode." -u critical
-          exit 1
-        fi
-
-        bluetoothctl trust "$DEVICE_MAC" >/dev/null 2>&1
-        sleep 1  # Allow trust to process
-
-        # Attempt pairing
-        if ! bluetoothctl pair "$DEVICE_MAC" >/dev/null 2>&1; then
-          notify-send "Bluetooth Error" "Pairing failed. Check device." -u critical
-          exit 1
-        fi
-
-        # Connection retry loop
-        connect_success=false
-        for ((j = 1; j <= 3; j++)); do
-          if bluetoothctl connect "$DEVICE_MAC" >/dev/null 2>&1; then
-            connect_success=true
-            break
-          fi
-          sleep 2
-        done
-
-        if $connect_success; then
-          notify-send "Bluetooth Status" "Connected to $DEVICE_MAC" -u normal
-        else
-          notify-send "Bluetooth Warning" "Connection failed. Try again." -u critical
-        fi
-
-        exit 0
+# Check Bluetooth service status
+if systemctl is-active --quiet bluetooth; then
+  # Bluetooth is running
+  choice=$(echo -e "Yes\nNo" | tofi --prompt-text "Bluetooth is running. Do you want to stop it? ")
+  if [ "$choice" = "Yes" ]; then
+    password=$(get_sudo_password)
+    if [ -n "$password" ]; then
+      echo "$password" | sudo -S systemctl stop bluetooth
+      if [ $? -eq 0 ]; then
+        notify-send "Bluetooth Control" "Bluetooth service stopped."
+      else
+        notify-send "Bluetooth Control Error" "Failed to stop Bluetooth service. Incorrect password or insufficient permissions."
       fi
-    done
-    notify-send "Bluetooth Error" "Failed to enable after $max_retries attempts" -u critical
-    exit 1
+    else
+      notify-send "Bluetooth Control Error" "No password provided."
+    fi
+  else
+    notify-send "Bluetooth Control" "No action taken."
   fi
-  ;;
-"no")
-  exit 0
-  ;;
-*)
-  notify-send "Bluetooth Error" "Invalid selection" -u critical
-  exit 1
-  ;;
-esac
+else
+  # Bluetooth is not running
+  choice=$(echo -e "Yes\nNo" | tofi --prompt-text "Bluetooth is not running. Do you want to start it? ")
+  if [ "$choice" = "Yes" ]; then
+    password=$(get_sudo_password)
+    if [ -n "$password" ]; then
+      echo "$password" | sudo -S systemctl start bluetooth
+      if [ $? -eq 0 ]; then
+        notify-send "Bluetooth Control" "Bluetooth service started."
+        sleep 2
+        connect_R50 "$ID"
+      else
+        notify-send "Bluetooth Control Error" "Failed to start Bluetooth service. Incorrect password or insufficient permissions."
+      fi
+    else
+      notify-send "Bluetooth Control Error" "No password provided."
+    fi
+  else
+    notify-send "Bluetooth Control" "No action taken."
+  fi
+fi
